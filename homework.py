@@ -49,6 +49,7 @@ logger.addHandler(file_handler)
 
 
 def send_message(bot, message):
+    """Отправка сообщения ботом."""
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logger.debug(MESSAGE_DEBUG.format(message))
@@ -58,12 +59,14 @@ def send_message(bot, message):
 
 
 def get_api_answer(current_timestamp):
+    """Запрос к API."""
     params = {"from_date": current_timestamp}
     response = requests.get(ENDPOINT, headers=HEADERS, params=params)
     return response.json()
 
 
 def check_response(response):
+    """Проверка ответа API на корректность."""
     if not isinstance(response, dict):
         raise TypeError(ERROR_DICTONARY.format(type(response)))
     if "homeworks" not in response:
@@ -75,6 +78,7 @@ def check_response(response):
 
 
 def parse_status(homework):
+    """Получение статуста домашней работы."""
     homework_name = homework["homework_name"]
     homework_status = homework["status"]
 
@@ -86,6 +90,7 @@ def parse_status(homework):
 
 
 def check_tokens():
+    """Проверка переменных окружения."""
     status = True
     for check in TOKENS_ALL:
         if not globals()[check]:
