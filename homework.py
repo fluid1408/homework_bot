@@ -61,6 +61,7 @@ class RequestToYandexPracticumError(Exception):
 
     pass
 
+
 class ServerError(Exception):
     """Ошибка сервера."""
 
@@ -107,6 +108,7 @@ def get_api_answer(current_timestamp):
         )
     return json
 
+
 def check_response(response):
     """Проверка ответа API на корректность."""
     if not isinstance(response, dict):
@@ -148,17 +150,15 @@ def main():
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = 0
     last_error_message = ''
-
-
     while True:
         try:
             response = get_api_answer(current_timestamp)
             homeworks = check_response(response)
             message = parse_status(homeworks[0])
             if send_message(bot, message):
-                    current_timestamp = response.get(
-                        "current_date", current_timestamp
-                    )
+                current_timestamp = response.get(
+                    "current_date", current_timestamp
+                )
 
         except Exception as error:
             message = MAIN_EXCEPTION_ERROR_MESSAGE.format(error)
