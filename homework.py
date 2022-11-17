@@ -87,7 +87,7 @@ def get_api_answer(current_timestamp):
         url=ENDPOINT, headers=HEADERS, params={"from_date": current_timestamp}
     )
     try:
-        response = requests.get(request_data)
+        response = requests.get(ENDPOINT, headers=HEADERS, params=params)
     except requests.exceptions.RequestException as request_error:
         raise ConnectionError(
             GET_API_ANSWER_REQUEST_ERROR.format(request_error, request_data)
