@@ -21,10 +21,10 @@ RETRY_TIME = 600
 ENDPOINT = "https://practicum.yandex.ru/api/user_api/homework_statuses/"
 HEADERS = {"Authorization": f"OAuth {PRACTICUM_TOKEN}"}
 ERROR_DICTONARY = "Ответ пришел не в виде словаря. Тип данных: {}."
-ERROR_KEY = "Ответ пришел не в виде ключа. Тип данных: {}."
+ERROR_KEY = 'Невозможно получить значение по ключу: homeworks.'
 ERROR_LIST = "Ответ пришел не в виде списка. Тип данных: {}."
 MESSAGE_DEBUG = "Ошибка отправки сообщения {}"
-MAIN_EXCEPTION_ERROR = "Ошибка {}"
+MAIN_EXCEPTION_ERROR = "Ошибка: {}"
 MAIN_EXCEPTION_ERROR_MESSAGE = "Сбой в работе программы"
 STATUS_HOMEWORK = "Полученный статус {} не определён в словаре HOMEWORK."
 PARSE_STATUS = 'Изменился статус проверки работы "{}".{}'
@@ -36,8 +36,8 @@ GET_API_ANSWER_RESPONSE_STATUS_ERROR = (
 )
 JSON_ERRORS = ["error", "code"]
 CHECK_TOKENS_CRITICAL_LOG = "Отсутствие обязательной переменной окружения {} "
-SERVER_DENIAL_ERROR = "Отказ в обслуживании {}"
-GET_API_ANSWER_REQUEST_ERROR = "Ошибка ответа запроса к API {}"
+SERVER_DENIAL_ERROR = "Отказ в обслуживании {}, {}, {}"
+GET_API_ANSWER_REQUEST_ERROR = "Ошибка ответа запроса к API {}, {}"
 
 HOMEWORK_STATUSES = {
     "approved": "Работа проверена: ревьюеру всё понравилось. Ура!",
@@ -59,13 +59,9 @@ logger.addHandler(file_handler)
 class RequestToYandexPracticumError(Exception):
     """Статус ответа от эндпоинта отличается от 200."""
 
-    pass
-
 
 class ServerError(Exception):
     """Ошибка сервера."""
-
-    pass
 
 
 def send_message(bot, message):
@@ -74,20 +70,17 @@ def send_message(bot, message):
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logger.debug(MESSAGE_DEBUG.format(message))
         return True
-
     except telegram.error.TelegramError as error:
         logger.exception(MAIN_EXCEPTION_ERROR.format(error))
 
 
 def get_api_answer(current_timestamp):
     """Запрос к API."""
-    params = {"from_date": current_timestamp}
-    response = requests.get(ENDPOINT, headers=HEADERS, params=params)
     request_data = dict(
         url=ENDPOINT, headers=HEADERS, params={"from_date": current_timestamp}
     )
     try:
-        response = requests.get(ENDPOINT, headers=HEADERS, params=params)
+        response = requests.get(**request_data)
     except requests.exceptions.RequestException as request_error:
         raise ConnectionError(
             GET_API_ANSWER_REQUEST_ERROR.format(request_error, request_data)
@@ -97,13 +90,13 @@ def get_api_answer(current_timestamp):
         if error in json:
             raise ServerError(
                 SERVER_DENIAL_ERROR.format(
-                    error, JSON_ERRORS[error], request_data
+                    error, JSON_ERRORS, request_data
                 )
             )
     if response.status_code != 200:
         raise RequestToYandexPracticumError(
             GET_API_ANSWER_RESPONSE_STATUS_ERROR.format(
-                response.status_code, request_data
+                response.status_code, **request_data
             )
         )
     return json
@@ -159,14 +152,12 @@ def main():
                 current_timestamp = response.get(
                     "current_date", current_timestamp
                 )
-
         except Exception as error:
             message = MAIN_EXCEPTION_ERROR_MESSAGE.format(error)
             logger.exception(message)
             if message != last_error_message:
-                if send_message(bot, message):
-                    last_error_message = message
-
+                send_message(bot, message)
+                last_error_message = message
         finally:
             time.sleep(RETRY_TIME)
 
