@@ -72,6 +72,7 @@ def send_message(bot, message):
         return True
     except telegram.error.TelegramError as error:
         logger.exception(MAIN_EXCEPTION_ERROR.format(error))
+        return error
 
 
 def get_api_answer(current_timestamp):
@@ -90,7 +91,7 @@ def get_api_answer(current_timestamp):
         if error in json:
             raise ServerError(
                 SERVER_DENIAL_ERROR.format(
-                    error, JSON_ERRORS, request_data
+                    error, json[error], request_data
                 )
             )
     if response.status_code != 200:
@@ -107,7 +108,7 @@ def check_response(response):
     if not isinstance(response, dict):
         raise TypeError(ERROR_DICTONARY.format(type(response)))
     if "homeworks" not in response:
-        raise KeyError(ERROR_KEY.format("homeworks"))
+        raise KeyError(ERROR_KEY)
     homeworks = response.get("homeworks")
     if not isinstance(homeworks, list):
         raise TypeError(ERROR_LIST.format(type(homeworks)))
@@ -118,7 +119,6 @@ def parse_status(homework):
     """Получение статуста домашней работы."""
     name = homework["homework_name"]
     status = homework["status"]
-
     if status not in HOMEWORK_STATUSES:
         raise ValueError(STATUS_HOMEWORK).format(status)
     return PARSE_STATUS.format(
