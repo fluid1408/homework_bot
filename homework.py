@@ -72,7 +72,6 @@ def send_message(bot, message):
         return True
     except telegram.error.TelegramError as error:
         logger.exception(MAIN_EXCEPTION_ERROR.format(error))
-        return error
 
 
 def get_api_answer(current_timestamp):
@@ -154,10 +153,10 @@ def main():
                 )
         except Exception as error:
             message = MAIN_EXCEPTION_ERROR_MESSAGE.format(error)
-            logger.exception(message)
+            logging.error(message)
             if message != last_error_message:
-                send_message(bot, message)
-                last_error_message = message
+                if send_message(bot, message):
+                    last_error_message = message
         finally:
             time.sleep(RETRY_TIME)
 
